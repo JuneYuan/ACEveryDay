@@ -12,9 +12,8 @@
 
 
 public class Solution {
-    List<Deque<TreeNode>> paths = new ArrayList<>();
-    Set<TreeNode> visited = new HashSet<>();
     Deque<TreeNode> stack = new ArrayDeque<>();
+    Deque<TreeNode> pathA, pathB;
     
     /*
      * @param root: The root of the binary search tree.
@@ -23,83 +22,51 @@ public class Solution {
      * @return: Return the least common ancestor(LCA) of the two nodes.
      */
     public TreeNode lowestCommonAncestor(TreeNode root, TreeNode A, TreeNode B) {
-        dfs(root);
-
-        Deque<TreeNode> pathA = null, pathB = null;
-        for (Deque<TreeNode> path : paths) {
-            if (pathA == null && path.contains(A)) {
-                pathA = path;
-            }
-
-            if (pathB == null && path.contains(B)) {
-                pathB = path;
-            }
-
-            if (pathA != null && pathB != null) {
-                break;
-            }
+        if (root == null || (root.left == null && root.right == null)) {
+            return root;
         }
-
+        
+        helper(root, A, B);
+        
         TreeNode result = null;
-
-        if (pathA.equals(pathB)) {
-            while (!(result = pathA.peek()).equals(A) && !result.equals(B)) {
-                pathA.poll();
-            }
-            return result;
-        }
-
-        TreeNode peekA, peekB;
-        while ((peekA = pathA.peek()) != null && (peekB = pathB.peek()) != null && peekA.equals(peekB)) {
+        while (!pathA.isEmpty() && !pathB.isEmpty() && pathA.peek().equals(pathB.peek())) {
             result = pathA.poll();
             pathB.poll();
         }
+        
         return result;
     }
-
-    public void dfs(TreeNode root) {
+    
+    private void helper(TreeNode root, TreeNode A, TreeNode B) {
         stack.push(root);
-
-        // 8 5 1
+        
+        if (root == A) {
+            pathA = cpPath(stack);
+        }
+        if (root == B) {
+            pathB = cpPath(stack);
+        }
+        
         if (root.left != null) {
-            dfs(root.left);
-        } else if (root.right != null) {
-            dfs(root.right);
+            helper(root.left, A, B);
         }
-
-        // 快照一下当前路径：[8 5 1] [8 5 4 2] [8 5 4 3] [8 7 6]
-        if (!stack.isEmpty()) {
-            savePath(stack);
-        } else {
-            return;
+        
+        if (root.right != null) {
+            helper(root.right, A, B);
         }
-
-        // 叶子结点出栈
-        TreeNode t = stack.poll();
-        visited.add(t);
-
-        //
-        TreeNode peek = stack.peek();
-        while (peek != null && (peek.right == null || visited.contains(peek.right))) {
-            t = stack.poll();
-            visited.add(t);
-            peek = stack.peek();
-        }
-
-        // dfs(4) dfs(3)
-        if (peek != null) {
-            dfs(peek.right);
-        }
+        
+        stack.pop();
     }
-
-    private void savePath(Deque<TreeNode> stack) {
-        Deque<TreeNode> onePath = new ArrayDeque<>();
-
+    
+    private Deque<TreeNode> cpPath(Deque<TreeNode> stack) {
+        Deque<TreeNode> route = new ArrayDeque<>();
+        
         Iterator<TreeNode> it = stack.iterator();
         while (it.hasNext()) {
-            onePath.push(it.next());
+            route.push(it.next());
         }
-
-        paths.add(onePath);
+        
+        return route;
     }
+    
 }
